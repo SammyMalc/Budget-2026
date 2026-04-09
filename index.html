@@ -157,6 +157,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);-we
 .rem-save-btn.saved{background:var(--green-dim);border-color:rgba(74,222,128,.3);color:var(--green);}
 /* EPARGNE */
 .epargne-card{background:var(--surface);border:2px solid rgba(74,222,128,.25);border-radius:var(--radius);padding:18px;margin-bottom:20px;}
+.charges-card{background:var(--surface);border:2px solid rgba(248,113,113,.2);border-radius:var(--radius);padding:18px;margin-bottom:20px;}
+.charges-title{font-size:15px;font-weight:600;color:var(--muted);margin-bottom:4px;}
+.charges-amount{font-size:36px;font-weight:600;font-family:'DM Mono',monospace;color:var(--red);margin-bottom:8px;letter-spacing:-1px;}
+.charges-list{margin-bottom:14px;}
+.charges-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.charges-item:last-child{border-bottom:none;}
+.charges-item-name{color:var(--muted);}
+.charges-item-val{font-family:'DM Mono',monospace;font-weight:500;}
+.charges-item-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:2px 6px;line-height:1;}
+.charges-item-edit{background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;padding:2px 6px;line-height:1;font-family:'DM Sans',sans-serif;}
+.charges-item-editing{display:flex;align-items:center;gap:6px;width:100%;padding:6px 0;border-bottom:1px solid var(--border);}
+.charges-item-editing:last-child{border-bottom:none;}
+.charges-edit-name{flex:1.5;background:var(--surface2);border:1px solid var(--blue);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:7px 10px;border-radius:8px;outline:none;}
+.charges-edit-val{flex:1;background:var(--surface2);border:1px solid var(--blue);color:var(--text);font-family:'DM Mono',monospace;font-size:14px;padding:7px 10px;border-radius:8px;outline:none;}
+.charges-edit-ok{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.charges-add{display:flex;gap:8px;margin-bottom:10px;}
+.charges-add input{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:11px 12px;border-radius:var(--radius-sm);outline:none;}
+.charges-add input:focus{border-color:var(--red);}
+.btn-charges{background:var(--red);color:#fff;border:none;border-radius:var(--radius-sm);padding:12px 16px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;}
 .epargne-title{font-size:15px;font-weight:600;color:var(--muted);margin-bottom:8px;}
 .epargne-amount{font-size:36px;font-weight:600;font-family:'DM Mono',monospace;color:var(--green);margin-bottom:14px;letter-spacing:-1px;}
 .epargne-edit{display:flex;gap:8px;}
@@ -277,6 +296,20 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
         <button class="btn-epargne" onclick="saveEpargne()">Modifier</button>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px;" id="epargne-updated"></div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-label">Charges fixes mensuelles</div>
+    <div class="charges-card">
+      <div class="charges-title">Total charges fixes</div>
+      <div class="charges-amount" id="charges-display">— €</div>
+      <div class="charges-list" id="charges-list"></div>
+      <div class="charges-add">
+        <input type="text" id="charge-name" placeholder="Nom (ex: Loyer)" style="flex:1.5;">
+        <input type="number" id="charge-val" placeholder="Montant" min="0" step="0.01" inputmode="decimal" style="flex:1;">
+        <button class="btn-charges" onclick="addCharge()">+ Ajouter</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);">Ces charges sont déduites automatiquement dans les enveloppes et le simulateur.</div>
     </div>
   </div>
   <div class="section">
@@ -417,7 +450,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
 const SB_URL='https://rfaoieqalxxoicpvpumv.supabase.co';
 const SB_KEY='sb_publishable_DiK3j_Aoa_x0AlYYGwUn8Q_Af2HW32C';
 const SB_H={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
-const CHARGES=933.53,KM=1320,REV_BASE=2000;
+const KM=1320,REV_BASE=2000;
+const DEFAULT_CHARGES=[
+  {id:'loyer',name:'Loyer',val:650},
+  {id:'edf',name:'EDF',val:60},
+  {id:'internet',name:'Internet',val:35},
+  {id:'assurance',name:'Assurance',val:80},
+  {id:'abonnements',name:'Abonnements',val:40},
+  {id:'telephone',name:'Téléphone',val:25},
+  {id:'autre',name:'Autres',val:43.53},
+];
+function getChargesList(){return db.chargesList||DEFAULT_CHARGES;}
+function getTotalCharges(){return getChargesList().reduce((s,c)=>s+c.val,0);}
 const MOIS_C=['Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 const MOIS_L=['Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
 const ENV_LIST=[
@@ -562,7 +606,7 @@ function renderEnv(){
   const totalCash=spent.courses+spent.restaurant+spent.carburant+spent.imprevu;
   const savMois=remSaved&&parseFloat(remSaved.sav)>0?parseFloat(remSaved.sav):(parseInt(sp.sav)||200);
   const carCredit=parseInt(sp.car)||0;
-  const dispo=rev-CHARGES-carCredit-savMois;
+  const dispo=rev-getTotalCharges()-carCredit-savMois;
   const buffer=dispo-totalCash;
 
   const revTag=remSaved?`${fmt(rev)} <span style="font-size:10px;color:var(--green);">(réel)</span>`:`${fmt(rev)} <span style="font-size:10px;color:var(--muted);">(estimé)</span>`;
@@ -572,7 +616,7 @@ function renderEnv(){
       <div><div class="sl-label">Reste à dépenser</div><div class="sl-amount" style="color:${buffer>=0?'var(--green)':'var(--red)'};">${fmt(buffer)}</div></div>
       <div><div class="sr-label">Revenus</div><div class="sr-amount" style="color:var(--green);">${revTag}</div></div>
     </div>
-    <div class="sol-row"><span>Charges fixes</span><span>${fmt(-CHARGES)}</span></div>
+    <div class="sol-row"><span>Charges fixes</span><span>${fmt(-getTotalCharges())}</span></div>
     ${carCredit>0?`<div class="sol-row"><span>Crédit voiture</span><span>${fmt(-carCredit)}</span></div>`:''}
     <div class="sol-row"><span>Épargne du mois</span><span style="color:var(--teal);">${fmt(-savMois)}</span></div>
     <div class="sol-sep"></div>
@@ -678,6 +722,73 @@ async function saveEpargne(){
   renderEpargne();await saveDB();
 }
 
+function renderCharges(editingId=null){
+  const list=getChargesList();
+  const total=getTotalCharges();
+  document.getElementById('charges-display').textContent=total.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  document.getElementById('charges-list').innerHTML=list.map(c=>{
+    if(c.id===editingId){
+      return`<div class="charges-item-editing">
+        <input class="charges-edit-name" id="cedit-name-${c.id}" value="${c.name}">
+        <input class="charges-edit-val" id="cedit-val-${c.id}" type="number" value="${c.val}" min="0" step="0.01" inputmode="decimal">
+        <button class="charges-edit-ok" onclick="saveChargeEdit('${c.id}')">✓</button>
+        <button class="charges-item-del" onclick="renderCharges()">×</button>
+      </div>`;
+    }
+    return`<div class="charges-item">
+      <span class="charges-item-name">${c.name}</span>
+      <span class="charges-item-val">${c.val.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})} €</span>
+      <button class="charges-item-edit" onclick="renderCharges('${c.id}')">✎ modifier</button>
+      <button class="charges-item-del" onclick="delCharge('${c.id}')">×</button>
+    </div>`;
+  }).join('');
+  if(editingId){
+    const inp=document.getElementById('cedit-val-'+editingId);
+    if(inp)setTimeout(()=>inp.focus(),50);
+  }
+}
+
+async function saveChargeEdit(id){
+  const name=document.getElementById('cedit-name-'+id).value.trim();
+  const val=parseFloat(document.getElementById('cedit-val-'+id).value);
+  if(!name||isNaN(val)||val<0)return;
+  const list=getChargesList();
+  const idx=list.findIndex(c=>c.id===id);
+  if(idx>=0){list[idx]={id,name,val};db.chargesList=list;}
+  renderCharges();
+  scheduleSave();await saveDB();
+  if(document.getElementById('page-env').classList.contains('active'))renderEnv();
+  if(document.getElementById('page-sim').classList.contains('active'))renderSim();
+}
+
+async function addCharge(){
+  const name=document.getElementById('charge-name').value.trim();
+  const val=parseFloat(document.getElementById('charge-val').value);
+  if(!name||isNaN(val)||val<=0){
+    const el=document.getElementById('charge-val');
+    el.style.borderColor='var(--red)';
+    setTimeout(()=>el.style.borderColor='',1500);
+    return;
+  }
+  const list=getChargesList();
+  list.push({id:Date.now().toString(),name,val});
+  db.chargesList=list;
+  document.getElementById('charge-name').value='';
+  document.getElementById('charge-val').value='';
+  renderCharges();
+  scheduleSave();await saveDB();
+  if(document.getElementById('page-env').classList.contains('active'))renderEnv();
+  if(document.getElementById('page-sim').classList.contains('active'))renderSim();
+}
+
+async function delCharge(id){
+  db.chargesList=getChargesList().filter(c=>c.id!==id);
+  renderCharges();
+  scheduleSave();await saveDB();
+  if(document.getElementById('page-env').classList.contains('active'))renderEnv();
+  if(document.getElementById('page-sim').classList.contains('active'))renderSim();
+}
+
 async function saveRemForm(idx){
   const net=parseFloat(document.getElementById('rem-net-'+idx).value);
   const brut=parseFloat(document.getElementById('rem-brut-'+idx).value)||null;
@@ -703,6 +814,7 @@ async function saveRemForm(idx){
 
 function renderRem(){
   renderEpargne();
+  renderCharges();
   let tp=0,ttr=0,nb=0,ts=0;
   document.getElementById('rem-cards').innerHTML=MOIS_L.map((mois,i)=>{
     const idx=i+3,saved=getRem(idx);
@@ -767,7 +879,7 @@ function renderSim(){
 
   const carb=Math.round(KM*p.conso/100*p.fuel);
   const rev=getRevenus(currentMonth);
-  const dep=CHARGES+carb+p.food+p.resto+p.car+p.sav;
+  const dep=getTotalCharges()+carb+p.food+p.resto+p.car+p.sav;
   const buf=rev-dep;
 
   document.getElementById('sim-metrics').innerHTML=[
@@ -791,7 +903,7 @@ function renderSim(){
   }).join('');
 
   document.getElementById('sim-pockets').innerHTML=[
-    {n:'Charges fixes',a:Math.round(CHARGES),max:1000,c:'#888896'},
+    {n:'Charges fixes',a:Math.round(getTotalCharges()),max:1200,c:'#888896'},
     {n:'Carburant',a:carb,max:250,c:'#fbbf24'},
     {n:'Courses',a:p.food,max:600,c:'#a78bfa'},
     {n:'Restaurants',a:p.resto,max:300,c:'#fb923c'},
