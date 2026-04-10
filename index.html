@@ -679,14 +679,42 @@ function renderEnv(){
 
 async function addTx(){
   const label=document.getElementById('tx-label').value.trim();
-  const amount=parseFloat(document.getElementById('tx-amount').value);
+  let amount=parseFloat(document.getElementById('tx-amount').value);
   const cat=document.getElementById('tx-cat').value;
+  
+  // NOUVEAU : On récupère le choix du menu déroulant (s'il existe)
+  const typeSelect = document.getElementById('tx-type');
+  const isRefund = typeSelect && typeSelect.value === 'refund';
+
   if(!amount||amount<=0){
     const el=document.getElementById('tx-amount');
     el.style.borderColor='var(--red)';
     setTimeout(()=>el.style.borderColor='',1500);
     return;
   }
+
+  // NOUVEAU : Si c'est un remboursement, on passe le montant en négatif
+  if (isRefund) {
+    amount = -amount;
+  }
+
+  const btn=document.getElementById('btn-add-tx');
+  btn.disabled=true;btn.textContent='Enregistrement…';
+  const txs=getTx(currentMonth);
+  txs.push({id:Date.now().toString(),label,amount,cat,date:new Date().toISOString()});
+  saveTx(currentMonth,txs);
+  closeDrawer();
+  
+  document.getElementById('tx-label').value='';
+  document.getElementById('tx-amount').value='';
+  // On remet le sélecteur sur Dépense par défaut
+  if(typeSelect) typeSelect.value = 'expense'; 
+  
+  renderEnv();
+  await saveDB();
+  btn.disabled=false;btn.textContent='Enregistrer';
+}
+  
   const btn=document.getElementById('btn-add-tx');
   btn.disabled=true;btn.textContent='Enregistrement…';
   const txs=getTx(currentMonth);
