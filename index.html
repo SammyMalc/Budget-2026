@@ -993,7 +993,25 @@ window.addEventListener('load', () => {
     }, 500);
   }, 2500);
 });
+  
+// --- MODULE REMBOURSEMENT ---
+function ajouterOperationRapide() {
+  const type = document.getElementById('quick-op-type').value;
+  const montantInput = document.getElementById('quick-op-amount');
+  const montant = parseFloat(montantInput.value);
+  if (isNaN(montant) || montant <= 0) return;
 
+  // Modifie le solde (vérifie si ta variable s'appelle bien solde ou total)
+  if (type === 'refund') {
+    solde += montant; 
+  } else {
+    solde -= montant; 
+  }
+
+  montantInput.value = '';
+  // Rafraîchit l'affichage 
+  if (typeof renderSim === "function") renderSim(); 
+}
 // SLIDERS
 ['s-fuel','s-conso','s-car','s-sav','s-food','s-resto','s-tr'].forEach(id=>{
   document.getElementById(id).addEventListener('input',()=>{
