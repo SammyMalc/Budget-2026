@@ -679,7 +679,7 @@ function renderEnv(){
 
 async function addTx(){
   const label=document.getElementById('tx-label').value.trim();
-  const amount=parseFloat(document.getElementById('tx-amount').value);
+  let amount=parseFloat(document.getElementById('tx-amount').value);
   const cat=document.getElementById('tx-cat').value;
   if(!amount||amount<=0){
     const el=document.getElementById('tx-amount');
@@ -690,7 +690,8 @@ async function addTx(){
   const btn=document.getElementById('btn-add-tx');
   btn.disabled=true;btn.textContent='Enregistrement…';
   const txs=getTx(currentMonth);
-  txs.push({id:Date.now().toString(),label,amount,cat,date:new Date().toISOString()});
+  if (document.getElementById('tx-type') && document.getElementById('tx-type').value === 'refund') { amount = -amount; }
+txs.push({id:Date.now().toString(),label,amount,cat,date:new Date().toISOString()});
   saveTx(currentMonth,txs);
   closeDrawer();
   document.getElementById('tx-label').value='';
