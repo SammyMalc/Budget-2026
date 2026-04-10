@@ -419,11 +419,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
-<!-- DRAWER DÉPENSE -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-handle"></div>
-  <div class="drawer-title">Nouvelle dépense</div>
+  <div class="drawer-title">Saisir une opération</div>
+  
+  <div class="field">
+    <label>Type d'opération</label>
+    <select id="tx-type" style="background:var(--surface2); color:white; border:1px solid var(--border); padding:10px; border-radius:8px; outline:none; width:100%;">
+      <option value="expense">➖ Dépense</option>
+      <option value="refund">➕ Remboursement</option>
+    </select>
+  </div>
+
   <div class="field"><label>Description</label><input type="text" id="tx-label" placeholder="Ex : Carrefour, Total…" autocomplete="off"></div>
   <div class="field-row">
     <div class="field"><label>Montant (€)</label><input type="number" id="tx-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
@@ -679,13 +687,41 @@ function renderEnv(){
 
 async function addTx(){
   const label=document.getElementById('tx-label').value.trim();
-  const amount=parseFloat(document.getElementById('tx-amount').value);
+  let amount=parseFloat(document.getElementById('tx-amount').value);
   const cat=document.getElementById('tx-cat').value;
+  
+  // On regarde le choix du menu déroulant (Dépense ou Remboursement)
+  const typeSelect = document.getElementById('tx-type');
+  const isRefund = typeSelect && typeSelect.value === 'refund';
+
   if(!amount||amount<=0){
     const el=document.getElementById('tx-amount');
     el.style.borderColor='var(--red)';
     setTimeout(()=>el.style.borderColor='',1500);
     return;
+  }
+
+  // Si c'est un remboursement, on passe le montant en négatif
+  if (isRefund) {
+    amount = -amount;
+  }
+
+  const btn=document.getElementById('btn-add-tx');
+  btn.disabled=true;btn.textContent='Enregistrement…';
+  const txs=getTx(currentMonth);
+  txs.push({id:Date.now().toString(),label,amount,cat,date:new Date().toISOString()});
+  saveTx(currentMonth,txs);
+  closeDrawer();
+  
+  document.getElementById('tx-label').value='';
+  document.getElementById('tx-amount').value='';
+  // On remet le bouton sur "Dépense" par défaut pour la prochaine fois
+  if(typeSelect) typeSelect.value = 'expense'; 
+  
+  renderEnv();
+  await saveDB();
+  btn.disabled=false;btn.textContent='Enregistrer';
+}
   }
   const btn=document.getElementById('btn-add-tx');
   btn.disabled=true;btn.textContent='Enregistrement…';
