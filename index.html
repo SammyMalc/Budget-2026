@@ -3,312 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Sam'Sou">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0f0f11">
-<title>Sam'Sou — Roi des Finances</title>
+<title>Sam'Sou — Gestion Pro</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500;700&display=swap');
-:root{--bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--surface3:#2c2c34;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#f0f0f2;--muted:#888896;--green:#4ade80;--green-dim:rgba(74,222,128,0.12);--amber:#fbbf24;--amber-dim:rgba(251,191,36,0.12);--red:#f87171;--red-dim:rgba(248,113,113,0.12);--blue:#60a5fa;--blue-dim:rgba(96,165,250,0.12);--purple:#a78bfa;--teal:#2dd4bf;--orange:#fb923c;--radius:16px;--radius-sm:10px;--nav-h:64px;--sync-h:36px;--safe-bottom:env(safe-area-inset-bottom,0px);}
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500;700&display=swap');
+:root{--bg:#0f0f11;--surface:#1a1a1f;--surface2:#222228;--border:rgba(255,255,255,0.08);--text:#f0f0f2;--muted:#888896;--green:#4ade80;--red:#f87171;--blue:#60a5fa;--radius:18px;--nav-h:65px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overscroll-behavior:none;}
-.app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
-.sync-bar{flex-shrink:0;height:var(--sync-h);display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);}
-.pages{flex:1;overflow:hidden;position:relative;}
-.page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(var(--nav-h) + 20px);display:none;}
-.page.active{display:block;}
-.nav{flex-shrink:0;height:calc(var(--nav-h) + var(--safe-bottom));display:flex;background:var(--surface);border-top:1px solid var(--border);padding-bottom:var(--safe-bottom);position:relative;z-index:100;}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .2s;border:none;background:none;font-family:'DM Sans',sans-serif;padding:8px 4px;}
-.nav-btn.active{color:var(--blue);}
-.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.nav-btn span{font-size:10px;font-weight:500;}
-
-/* MODULE OPÉRATIONS & FORMULAIRES */
-.custom-input, .custom-select {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 12px 10px;
-  border-radius: var(--radius-sm);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  outline: none;
-  min-width: 0;
-}
-.custom-select {
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23888896%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-repeat: no-repeat;
-  background-position: right 1rem top 50%;
-  background-size: 0.65rem auto;
-  padding-right: 30px;
-}
-.btn-primary {
-  background: var(--blue);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  transition: transform 0.1s;
-}
-.btn-primary:active { transform: scale(0.95); }
-
-/* ENVELOPPES */
-.env-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px; transition: all 0.3s ease;}
-.env-reste{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;}
-.env-bar-wrap{height:6px;background:var(--surface2);border-radius:3px;margin:10px 0 2px; overflow:hidden;}
-.env-bar{height:100%;border-radius:3px;transition:width 0.5s ease, background-color 0.3s;}
-
-/* FIX CHARGES FIXES (BULLE) */
-.charges-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--red); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; display: flex; flex-direction: column; height: auto; }
-.charges-amount { font-size: 32px; font-weight: 700; font-family:'DM Mono',monospace; color:var(--red); margin-bottom: 8px; letter-spacing: -1px; }
-.charges-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 12px; }
-.charges-item-name { flex: 1; color: var(--text); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.charges-item-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.charges-item-val { font-family: 'DM Mono', monospace; font-weight: 600; font-size: 14px; }
-.charges-add { display: flex; gap: 8px; margin-top: 15px; width: 100%; align-items: center; }
-.charges-add input[type="text"] { flex: 2; min-width: 0; }
-.charges-add input[type="number"] { flex: 1; min-width: 0; }
-.btn-charges { background: var(--red); color: #fff; border: none; border-radius: var(--radius-sm); width: 42px; height: 42px; font-size: 20px; font-weight: 600; flex-shrink: 0; }
-
-/* BASICS */
-.section-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;margin-top:24px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-.page-title { font-size: 24px; font-weight: 600; margin-bottom: 15px; }
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+.app{display:flex;flex-direction:column;height:100dvh;}
+.pages{flex:1;overflow-y:auto;padding:20px 16px 100px;}
+.page{display:none;} .page.active{display:block;}
 
 /* LOCK & SPLASH */
-#splash{position:fixed;inset:0;background:#0f0f11;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .5s ease;}
-#splash.fade{opacity:0;pointer-events:none;}
-.splash-logo{width:140px;height:140px;border-radius:30px;object-fit:cover;box-shadow:0 8px 30px rgba(0,0,0,.5); margin-bottom: 20px;}
-#lock{position:fixed;inset:0;background:#0f0f11;z-index:9998;display:none;flex-direction:column;align-items:center;justify-content:center;gap:0;}
-.lock-dots{display:flex;gap:16px;margin-bottom:30px;}
-.lock-dot{width:14px;height:14px;border-radius:50%;border:2px solid #444;background:transparent;transition:all .15s;}
-.lock-dot.filled{background:#60a5fa;border-color:#60a5fa;box-shadow:0 0 8px rgba(96,165,250,0.5);}
-.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;max-width:280px;width:100%;padding:0 16px;}
-.num-btn{aspect-ratio:1;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:#f0f0f2;font-size:24px;display:flex;align-items:center;justify-content:center; transition:background 0.1s;}
-.num-btn:active{background:var(--surface3);}
-</style>
-</head>
-<body>
+#splash, #lock{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#splash.fade{opacity:0;pointer-events:none;transition:0.5s;}
+.splash-logo, .lock-logo{width:100px;height:100px;border-radius:25px;object-fit:cover;margin-bottom:20px;box-shadow:0 8px 25px rgba(0,0,0,0.4);}
+.lock-dots{display:flex;gap:15px;margin:30px 0;}
+.lock-dot{width:15px;height:15px;border-radius:50%;border:2px solid #333;}
+.lock-dot.filled{background:var(--blue);border-color:var(--blue);box-shadow:0 0 10px var(--blue);}
+.numpad{display:grid;grid-template-columns:repeat(3,80px);gap:15px;}
+.num-btn{width:75px;height:75px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:white;font-size:24px;display:flex;align-items:center;justify-content:center;}
+.num-btn:active{background:var(--surface2);}
 
-<div id="splash">
-  <img class="splash-logo" src="https://i.ibb.co/v66m9qY/samsou-logo.png">
-  <h1 style="font-weight:600; font-size:24px; letter-spacing:1px;">SAM'SOU</h1>
-</div>
+/* DASHBOARD & REMBOURSEMENT */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:15px;}
+.balance-val{font-size:36px;font-family:'DM Mono';font-weight:700;text-align:center;margin:10px 0;}
+.op-box{display:flex;flex-direction:column;gap:10px;}
+.op-row{display:flex;gap:8px;}
+input, select{background:var(--surface2);border:1px solid var(--border);color:white;padding:12px;border-radius:12px;font-size:14px;outline:none;min-width:0;font-family:'DM Sans',sans-serif;}
 
-<div id="lock">
-  <div style="font-size:16px; margin-bottom:20px;">Code de sécurité</div>
-  <div id="lock-error" style="color:var(--red); font-size:12px; height:15px; margin-bottom:10px;"></div>
-  <div class="lock-dots">
-    <div class="lock-dot" id="ld0"></div><div class="lock-dot" id="ld1"></div><div class="lock-dot" id="ld2"></div>
-    <div class="lock-dot" id="ld3"></div><div class="lock-dot" id="ld4"></div><div class="lock-dot" id="ld5"></div>
-  </div>
-  <div class="numpad">
-    <div class="num-btn" onclick="numPress('1')">1</div><div class="num-btn" onclick="numPress('2')">2</div><div class="num-btn" onclick="numPress('3')">3</div>
-    <div class="num-btn" onclick="numPress('4')">4</div><div class="num-btn" onclick="numPress('5')">5</div><div class="num-btn" onclick="numPress('6')">6</div>
-    <div class="num-btn" onclick="numPress('7')">7</div><div class="num-btn" onclick="numPress('8')">8</div><div class="num-btn" onclick="numPress('9')">9</div>
-    <div style="visibility:hidden"></div><div class="num-btn" onclick="numPress('0')">0</div><div class="num-btn" onclick="numDel()" style="font-size:18px;">⌫</div>
-  </div>
-</div>
+/* FIX FINAL CHARGES (PIXEL 10 PRO) */
+.charges-card{background:var(--surface);border-left:4px solid var(--red);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.charges-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;}
+.charges-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;}
+.charges-val{font-family:'DM Mono';font-weight:700;flex-shrink:0;}
+.charges-add-group{display:flex;gap:8px;width:100%;margin-top:10px;}
+.charges-add-group input[type="text"]{flex:2;}
+.charges-add-group input[type="number"]{flex:1;}
+.btn-add-charge{background:var(--red);color:white;border:none;width:45px;border-radius:12px;font-weight:700;font-size:20px;flex-shrink:0;}
 
-<div class="app">
-  <div class="sync-bar">
-    <span>Sam'Sou Cloud</span>
-    <div style="width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 5px var(--green)"></div>
-  </div>
-
-  <div class="pages">
-    <div id="page-dash" class="page active">
-      <div class="page-title">Bonjour Sam</div>
-      
-      <div class="card" style="margin-bottom: 20px; text-align:center;">
-        <div style="font-size:12px; color:var(--muted); text-transform:uppercase; font-weight:600; margin-bottom:5px;">Solde Total</div>
-        <div id="total-balance" style="font-size:38px; font-weight:700; font-family:'DM Mono',monospace; color:var(--text);">0,00 €</div>
-      </div>
-
-      <div class="card" style="margin-bottom: 24px; border-left: 4px solid var(--blue);">
-        <div style="font-size:13px; font-weight:600; color:var(--text); margin-bottom:12px;">Saisir une opération</div>
-        
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-           <select id="op-type" class="custom-select" style="flex:1;">
-             <option value="expense">➖ Dépense</option>
-             <option value="refund">➕ Remboursement</option>
-           </select>
-           <input type="number" id="op-amount" placeholder="€" class="custom-input" style="width:85px; flex-shrink:0;">
-        </div>
-        <div style="display:flex; gap:8px;">
-           <select id="op-env" class="custom-select" style="flex:2;">
-             </select>
-           <button class="btn-primary" onclick="submitOperation()" style="flex:1;">Valider</button>
-        </div>
-      </div>
-
-      <div class="section-label">Enveloppes Actives</div>
-      <div id="env-list">
-        </div>
-    </div>
-
-    <div id="page-rem" class="page">
-      <div class="page-title">Rémunération</div>
-      
-      <div class="section-label">Charges Fixes</div>
-      <div class="charges-card">
-        <div style="font-size:12px; color:var(--muted); text-transform:uppercase; margin-bottom:4px;">Total mensuel</div>
-        <div class="charges-amount" id="total-charges">1 240,00 €</div>
-        
-        <div id="list-charges">
-          <div class="charges-item">
-            <span class="charges-item-name">Loyer appartement</span>
-            <div class="charges-item-right"><span class="charges-item-val">850€</span><button style="color:var(--red); background:none; border:none; font-size:16px;">✕</button></div>
-          </div>
-          <div class="charges-item">
-            <span class="charges-item-name">Abonnement Internet & Mobile</span>
-            <div class="charges-item-right"><span class="charges-item-val">45€</span><button style="color:var(--red); background:none; border:none; font-size:16px;">✕</button></div>
-          </div>
-        </div>
-
-        <div class="charges-add">
-          <input type="text" class="custom-input" placeholder="Nom (ex: Loyer)">
-          <input type="number" class="custom-input" placeholder="€">
-          <button class="btn-charges">+</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <nav class="nav">
-    <button class="nav-btn active" onclick="showPage('dash')">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-      <span>Dashboard</span>
-    </button>
-    <button class="nav-btn" onclick="showPage('rem')">
-      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-      <span>Charges</span>
-    </button>
-  </nav>
-</div>
-
-<script>
-// --- DONNÉES DE DÉMONSTRATION ---
-let appData = {
-  total: 2450.00,
-  envelopes: [
-    { id: 'env1', name: 'Alimentation', budget: 400, spent: 250, color: 'var(--amber)' },
-    { id: 'env2', name: 'Carburant', budget: 150, spent: 80, color: 'var(--purple)' },
-    { id: 'env3', name: 'Loisirs (Avances)', budget: 200, spent: 220, color: 'var(--green)' } // Enveloppe dans le rouge
-  ]
-};
-
-// --- LOGIQUE DU DASHBOARD & OPÉRATIONS ---
-function renderDashboard() {
-  // 1. Mise à jour du Solde Total
-  document.getElementById('total-balance').textContent = appData.total.toFixed(2).replace('.', ',') + ' €';
-
-  // 2. Mise à jour de la liste déroulante des enveloppes
-  const select = document.getElementById('op-env');
-  select.innerHTML = appData.envelopes.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-
-  // 3. Mise à jour visuelle des enveloppes
-  const list = document.getElementById('env-list');
-  list.innerHTML = appData.envelopes.map(e => {
-    const left = e.budget - e.spent; // Ce qu'il reste
-    const pct = Math.min(100, Math.max(0, (e.spent / e.budget) * 100)); // Pourcentage consommé
-    const isOver = left < 0; // Si on a dépassé
-    const barColor = isOver ? 'var(--red)' : e.color;
-    const textColor = isOver ? 'var(--red)' : 'var(--text)';
-
-    return `
-      <div class="env-card" style="${isOver ? 'border-color: rgba(248,113,113,0.3);' : ''}">
-        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-          <span style="font-weight:600; font-size:15px;">${e.name}</span>
-          <span style="color:var(--muted); font-size:12px">Budget: ${e.budget}€</span>
-        </div>
-        <div class="env-reste" style="color: ${textColor};">${left.toFixed(2).replace('.', ',')} €</div>
-        <div style="font-size:11px; color:var(--muted); margin-top:-2px; margin-bottom:8px;">restant</div>
-        <div class="env-bar-wrap"><div class="env-bar" style="width:${pct}%; background:${barColor}"></div></div>
-      </div>
-    `;
-  }).join('');
-}
-
-// Fonction appelée quand on clique sur "Valider"
-function submitOperation() {
-  const type = document.getElementById('op-type').value; // 'expense' ou 'refund'
-  const amountInput = document.getElementById('op-amount');
-  const amount = parseFloat(amountInput.value);
-  const envId = document.getElementById('op-env').value;
-
-  if(isNaN(amount) || amount <= 0) return; // Sécurité si case vide
-
-  const env = appData.envelopes.find(e => e.id === envId);
-  if(!env) return;
-
-  if(type === 'expense') {
-    appData.total -= amount; // Retire du solde général
-    env.spent += amount;     // Augmente les dépenses de l'enveloppe
-  } else if(type === 'refund') {
-    appData.total += amount; // Ajoute au solde général
-    env.spent -= amount;     // DIMINUE les dépenses (Recrédite l'enveloppe)
-  }
-
-  // Reset le champ et met à jour l'affichage
-  amountInput.value = '';
-  renderDashboard();
-}
-
-// Initialisation au lancement
-renderDashboard();
-
-
-// --- NAVIGATION ONGLETS ---
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
-}
-
-// --- LOGIQUE CODE PIN & SPLASH ---
-let lockInput = '';
-const PIN = '123456';
-
-function numPress(n) {
-  if (lockInput.length < 6) {
-    lockInput += n;
-    updateDots();
-    if (lockInput.length === 6) {
-      setTimeout(() => {
-        if (lockInput === PIN) {
-          document.getElementById('lock').style.display = 'none';
-        } else {
-          lockInput = '';
-          updateDots();
-          document.getElementById('lock-error').textContent = 'Code incorrect';
-        }
-      }, 200);
-    }
-  }
-}
-function numDel() { lockInput = lockInput.slice(0, -1); updateDots(); }
-function updateDots() {
-  for (let i = 0; i < 6; i++) {
-    document.getElementById('ld' + i).classList.toggle('filled', i < lockInput.length);
-  }
-}
-
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.getElementById('splash').classList.add('fade');
-    setTimeout(() => {
-      document.getElementById('splash').style.display = 'none';
-      document.getElementById('lock').style.display = 'flex';
-    }, 500);
-  }, 1500);
-});
-</script>
-</body>
-</html>
+/* NAVIGATION */
+.nav{position:fixed;bottom:0;
