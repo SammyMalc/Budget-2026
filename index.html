@@ -221,6 +221,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
   .drawer.open{transform:translateX(-50%) translateY(0);}
   .fab{right:calc(50% - 250px);}
 }
+/* FIX PIXEL 10 PRO */
+.charges-card { display: flex !important; flex-direction: column !important; height: auto !important; overflow: hidden; }
+.charges-item-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.charges-add { display: flex; flex-wrap: nowrap; gap: 8px; width: 100%; }
+.charges-add input { min-width: 0; }
+.charges-add input[type="text"] { flex: 2; }
+.charges-add input[type="number"] { flex: 1; }
 </style>
 </head>
 <body>
