@@ -423,18 +423,26 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;heigh
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-handle"></div>
-  <div class="drawer-title">Nouvelle dépense</div>
+  <div class="drawer-title" id="drawer-title">Nouvelle dépense</div>
 <div class="field">
   <label>Type d'opération</label>
   <select id="tx-type" style="background:var(--surface2); color:white; border:1px solid var(--border); padding:10px; border-radius:8px; outline:none; width:100%; margin-bottom:10px;">
     <option value="expense">➖ Dépense</option>
     <option value="refund">➕ Remboursement</option>
+    <option value="savings_withdraw">💰 Retrait d'épargne</option>
   </select>
 </div>
-  <div class="field"><label>Description</label><input type="text" id="tx-label" placeholder="Ex : Carrefour, Total…" autocomplete="off"></div>
+  <div id="savings-info" style="display:none;padding:10px 12px;background:rgba(74,222,128,.08);border-radius:8px;border:1px solid rgba(74,222,128,.25);font-size:12px;color:var(--green);margin-bottom:12px;line-height:1.45;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+      <span style="color:var(--muted);">Épargne disponible</span>
+      <span id="savings-available" style="font-family:'DM Mono',monospace;font-weight:600;color:var(--green);">— €</span>
+    </div>
+    <div style="color:var(--muted);font-size:11px;">Le montant sera déduit de ton épargne et ajouté au reste à dépenser du mois.</div>
+  </div>
+  <div class="field" id="tx-label-field"><label>Description</label><input type="text" id="tx-label" placeholder="Ex : Carrefour, Total…" autocomplete="off"></div>
   <div class="field-row">
     <div class="field"><label>Montant (€)</label><input type="number" id="tx-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
-    <div class="field"><label>Enveloppe</label>
+    <div class="field" id="tx-cat-field"><label>Enveloppe</label>
       <select id="tx-cat">
         <option value="courses">🛒 Courses</option>
         <option value="restaurant">🍽 Restaurant</option>
@@ -563,6 +571,8 @@ function showPage(id,el){
 
 // DRAWERS
 function openDrawer(){
+  document.getElementById('tx-type').value='expense';
+  updateDrawerMode();
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
   setTimeout(()=>document.getElementById('tx-label').focus(),320);
@@ -589,6 +599,37 @@ document.getElementById('tx-cat').addEventListener('change',function(){
   document.getElementById('tr-note').style.display=this.value==='tr'?'block':'none';
 });
 
+// Bascule l'UI du drawer selon le type d'opération (dépense / remboursement / retrait épargne)
+function updateDrawerMode(){
+  const type=document.getElementById('tx-type').value;
+  const isSavings=type==='savings_withdraw';
+  const title=document.getElementById('drawer-title');
+  const savingsInfo=document.getElementById('savings-info');
+  const catField=document.getElementById('tx-cat-field');
+  const labelField=document.getElementById('tx-label-field');
+  const trNote=document.getElementById('tr-note');
+  const btn=document.getElementById('btn-add-tx');
+  const labelInput=document.getElementById('tx-label');
+
+  if(isSavings){
+    title.textContent='Retrait d\'épargne';
+    savingsInfo.style.display='block';
+    document.getElementById('savings-available').textContent=fmt(getEpargne());
+    catField.style.display='none';
+    trNote.style.display='none';
+    btn.textContent='Transférer vers le mois';
+    labelInput.placeholder='Ex : Cagnotte vacances, imprévu…';
+  }else{
+    title.textContent=type==='refund'?'Nouveau remboursement':'Nouvelle dépense';
+    savingsInfo.style.display='none';
+    catField.style.display='';
+    btn.textContent='Enregistrer';
+    labelInput.placeholder='Ex : Carrefour, Total…';
+    trNote.style.display=document.getElementById('tx-cat').value==='tr'?'block':'none';
+  }
+}
+document.getElementById('tx-type').addEventListener('change',updateDrawerMode);
+
 // PAGE 1 ENVELOPPES
 function renderMonthSel(){
   document.getElementById('month-sel').innerHTML=MOIS_C.map((m,i)=>{
@@ -608,7 +649,12 @@ function renderEnv(){
   const txs=getTx(currentMonth),rev=getRevenus(currentMonth),remSaved=getRem(currentMonth);
   const sp=db.simParams||{};
   const spent={courses:0,restaurant:0,carburant:0,tr:0,imprevu:0};
-  txs.forEach(tx=>{const c=tx.cat in spent?tx.cat:'imprevu';spent[c]+=tx.amount;});
+  let savingsInjected=0; // retraits d'épargne injectés dans le mois
+  txs.forEach(tx=>{
+    if(tx.src==='epargne'){ savingsInjected += -tx.amount; return; } // amount négatif => on additionne le positif
+    const c=tx.cat in spent?tx.cat:'imprevu';
+    spent[c]+=tx.amount;
+  });
 
   const bPrinc=getEnvBudget(currentMonth,'courses')+getEnvBudget(currentMonth,'restaurant')+getEnvBudget(currentMonth,'carburant');
   const imp={
@@ -620,7 +666,7 @@ function renderEnv(){
   const totalCash=spent.courses+spent.restaurant+spent.carburant+spent.imprevu;
   const savMois=remSaved&&parseFloat(remSaved.sav)>0?parseFloat(remSaved.sav):(parseInt(sp.sav)||200);
   const carCredit=parseInt(sp.car)||0;
-  const dispo=rev-getTotalCharges()-carCredit-savMois;
+  const dispo=rev-getTotalCharges()-carCredit-savMois+savingsInjected;
   const buffer=dispo-totalCash;
 
   const revTag=remSaved?`${fmt(rev)} <span style="font-size:10px;color:var(--green);">(réel)</span>`:`${fmt(rev)} <span style="font-size:10px;color:var(--muted);">(estimé)</span>`;
@@ -633,6 +679,7 @@ function renderEnv(){
     <div class="sol-row"><span>Charges fixes</span><span>${fmt(-getTotalCharges())}</span></div>
     ${carCredit>0?`<div class="sol-row"><span>Crédit voiture</span><span>${fmt(-carCredit)}</span></div>`:''}
     <div class="sol-row"><span>Épargne du mois</span><span style="color:var(--teal);">${fmt(-savMois)}</span></div>
+    ${savingsInjected>0?`<div class="sol-row"><span style="color:var(--green);">Injection épargne</span><span style="color:var(--green);">+${fmt(savingsInjected)}</span></div>`:''}
     <div class="sol-sep"></div>
     <div class="sol-row"><span style="font-weight:500;color:var(--text);">Enveloppe disponible</span><span style="color:var(--blue);font-weight:600;">${fmt(dispo)}</span></div>
     <div class="sol-row"><span>Dépensé (cash + imprévus)</span><span style="color:var(--red);">${fmt(-totalCash)}</span></div>`;
@@ -674,17 +721,23 @@ function renderEnv(){
   if(!txs.length){listEl.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px 0;">Aucune dépense ce mois-ci</div>';return;}
   listEl.innerHTML=[...txs].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(tx=>{
     const dt=new Date(tx.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-    const isTR=tx.cat==='tr',isImp=tx.cat==='imprevu';
+    const isSavings=tx.src==='epargne';
+    const isTR=tx.cat==='tr',isImp=tx.cat==='imprevu'&&!isSavings;
+    const icon=isSavings?'💰':(CAT_ICN[tx.cat]||'💶');
+    const iconBg=isSavings?'rgba(74,222,128,.12)':(isTR?'var(--amber-dim)':isImp?'var(--red-dim)':'var(--surface2)');
+    const metaLabel=isSavings?'Retrait épargne':(CAT_LBL[tx.cat]||tx.cat);
+    const amtColor=isSavings?'var(--green)':(isTR?'var(--amber)':tx.amount<0?'var(--green)':'var(--red)');
     return`<div class="tx-item">
-      <div class="tx-icon" style="background:${isTR?'var(--amber-dim)':isImp?'var(--red-dim)':'var(--surface2)'};">${CAT_ICN[tx.cat]||'💶'}</div>
-      <div class="tx-body"><div class="tx-lbl">${tx.label||CAT_LBL[tx.cat]}</div><div class="tx-meta">${dt} · ${CAT_LBL[tx.cat]||tx.cat}</div></div>
-      <div class="tx-right"><div class="tx-amt" style="color:${isTR?'var(--amber)':'var(--red)'};">${fmtD(-tx.amount)}</div>${isTR?'<div class="tx-tag tr">TR</div>':''}${isImp?'<div class="tx-tag imp">Imprévu</div>':''}</div>
+      <div class="tx-icon" style="background:${iconBg};">${icon}</div>
+      <div class="tx-body"><div class="tx-lbl">${tx.label||CAT_LBL[tx.cat]}</div><div class="tx-meta">${dt} · ${metaLabel}</div></div>
+      <div class="tx-right"><div class="tx-amt" style="color:${amtColor};">${fmtD(-tx.amount)}</div>${isTR?'<div class="tx-tag tr">TR</div>':''}${isImp?'<div class="tx-tag imp">Imprévu</div>':''}${isSavings?'<div class="tx-tag" style="background:rgba(74,222,128,.15);color:var(--green);">Épargne</div>':''}</div>
       <button class="tx-del-btn" onclick="delTx(event,'${mKey(currentMonth)}','${tx.id}')">×</button>
     </div>`;
   }).join('');
 }
 
 async function addTx(){
+  const type=document.getElementById('tx-type').value;
   const label=document.getElementById('tx-label').value.trim();
   let amount=parseFloat(document.getElementById('tx-amount').value);
   const cat=document.getElementById('tx-cat').value;
@@ -694,10 +747,45 @@ async function addTx(){
     setTimeout(()=>el.style.borderColor='',1500);
     return;
   }
+
+  // Retrait d'épargne : vérifie le solde, décrémente db.epargne, crée une tx négative catégorie imprevu
+  if(type==='savings_withdraw'){
+    const solde=getEpargne();
+    if(amount>solde){
+      const el=document.getElementById('tx-amount');
+      el.style.borderColor='var(--red)';
+      document.getElementById('savings-available').style.color='var(--red)';
+      setTimeout(()=>{el.style.borderColor='';document.getElementById('savings-available').style.color='var(--green)';},1800);
+      return;
+    }
+    const btn=document.getElementById('btn-add-tx');
+    btn.disabled=true;btn.textContent='Transfert…';
+    db.epargne=solde-amount;
+    db.epargneUpdated=new Date().toISOString();
+    const txs=getTx(currentMonth);
+    txs.push({
+      id:Date.now().toString(),
+      label:label||'Retrait épargne',
+      amount:-amount,
+      cat:'imprevu',
+      src:'epargne',
+      date:new Date().toISOString()
+    });
+    saveTx(currentMonth,txs);
+    closeDrawer();
+    document.getElementById('tx-label').value='';
+    document.getElementById('tx-amount').value='';
+    renderEnv();
+    if(document.getElementById('page-rem').classList.contains('active'))renderEpargne();
+    await saveDB();
+    btn.disabled=false;btn.textContent='Transférer vers le mois';
+    return;
+  }
+
   const btn=document.getElementById('btn-add-tx');
   btn.disabled=true;btn.textContent='Enregistrement…';
   const txs=getTx(currentMonth);
-  if (document.getElementById('tx-type') && document.getElementById('tx-type').value === 'refund') { amount = -amount; }
+  if (type === 'refund') { amount = -amount; }
 txs.push({id:Date.now().toString(),label,amount,cat,date:new Date().toISOString()});
   saveTx(currentMonth,txs);
   closeDrawer();
@@ -710,8 +798,17 @@ txs.push({id:Date.now().toString(),label,amount,cat,date:new Date().toISOString(
 
 async function delTx(e,key,id){
   e.stopPropagation();
-  db[key]=(db[key]||[]).filter(t=>t.id!==id);
-  scheduleSave();renderEnv();await saveDB();
+  const list=db[key]||[];
+  const tx=list.find(t=>t.id===id);
+  // Si c'est un retrait d'épargne, on restitue le montant sur l'épargne
+  if(tx && tx.src==='epargne'){
+    db.epargne=getEpargne()+Math.abs(tx.amount);
+    db.epargneUpdated=new Date().toISOString();
+  }
+  db[key]=list.filter(t=>t.id!==id);
+  scheduleSave();renderEnv();
+  if(document.getElementById('page-rem').classList.contains('active'))renderEpargne();
+  await saveDB();
 }
 
 async function saveEnvBudget(){
